@@ -1,0 +1,54 @@
+---
+title: "R4MarineScience"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+#| label: body-size-shape
+#| layout-ncol: 2
+
+library(tidyverse)
+library(palmerpenguins)  # skip if you've already loaded your own data
+
+# 1. Summary table
+penguins |>
+  group_by(species, island) |>
+  summarise(
+    mean_body_mass = mean(body_mass_g, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# 2. Boxplot
+penguins |>
+  ggplot(aes(x = species, y = body_mass_g, fill = island)) +
+  geom_boxplot() +
+  labs(
+    x = "Species",
+    y = "Body mass (g)",
+    fill = "Island"
+  )
+
+
+```

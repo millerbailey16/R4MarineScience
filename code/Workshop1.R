@@ -114,7 +114,20 @@ biological_signal <- penguins %>%
     sd_mass_g   = sd(body_mass_g, na.rm = TRUE)            # Standard deviation calculation
   )
 
+
+# 1. Exporting our collapsed summary table as a universal flat text file
+write_csv(biological_signal, "outputs/penguin_species_mass_summary.csv")
+
+# 2. Saving our cleaned morphological cohort table as a native R binary file
+saveRDS(clean_cohort, "outputs/clean_penguin_morphology_cohort.rds")
+
+
 print(biological_signal)
+
+# Create output directories if they do not exist:
+if (!dir.exists("outputs/figures")) dir.create("outputs/figures") # folder for figs
+if (!dir.exists("outputs/tables")) dir.create("outputs/tables") # folder for tables
+if (!dir.exists("Rdata")) dir.create("Rdata") # folder for Rdata objects
 
 
 

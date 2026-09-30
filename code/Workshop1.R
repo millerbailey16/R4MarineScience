@@ -7,9 +7,6 @@ rm(list = ls())
 # Confirm that global session memory now completely vacant
 objects()
 
-ben <- "awesome"
-install.packages("here")
-
 
 # Load the primary data science framework and Excel import library
 library(tidyverse)
@@ -130,4 +127,15 @@ if (!dir.exists("outputs/tables")) dir.create("outputs/tables") # folder for tab
 if (!dir.exists("Rdata")) dir.create("Rdata") # folder for Rdata objects
 
 
+# 1. Exporting our collapsed summary table as a universal flat text file
+write_csv(biological_signal, "outputs/penguin_species_mass_summary.csv")
+
+# 2. Saving as a native R binary file
+saveRDS(object = biological_signal, file = "outputs/penguin_species_mass_summary.rds")
+
+
+ggsave("outputs/mass_compare_plot.png", 
+       plot = mass_compare_plot, 
+       width = 120, height = 120, 
+       units = "mm", dpi = 300)
 

@@ -52,6 +52,7 @@ penguins |>
 
 
 ```
+
 ```{r}
 # Pipe directly from aggregation to plotting with error bars
 mass_compare_plot <- penguins |>
@@ -85,4 +86,3 @@ ggsave("outputs/mass_compare_plot.png",
        units = "mm", dpi = 300)
 
 ```
-

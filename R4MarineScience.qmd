@@ -26,13 +26,14 @@ format:
 ---
 
 ```{r}
-#| label: body-size-shape
-#| echo: false
-#| layout-ncol: 2
+#| label: load-packages
+#| include: false
 
 library(tidyverse)
 library(palmerpenguins)  # skip if you've already loaded your own data
+```
 
+```{r}
 # 1. Summary table
 penguins |>
   group_by(species, island) |>

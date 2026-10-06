@@ -1,8 +1,6 @@
 ---
 title: "R4MarineScience"
-format: html
-editor: visual
----
+editor: source
 
 # Output Config
 format: 
@@ -29,6 +27,7 @@ format:
 
 ```{r}
 #| label: body-size-shape
+#| echo: false
 #| layout-ncol: 2
 
 library(tidyverse)

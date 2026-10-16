@@ -1,0 +1,106 @@
+---
+title: ""
+editor: source
+
+# Output Config
+format: 
+  # HTML Output
+  html:
+    theme: cosmo          # Modern Bootstrap theme with clean typography
+    highlight-style: a11y # High-contrast syntax highlighting for code
+    toc: true             # Includes a Table of Contents
+    toc-depth: 3          # Captures down to sub-subsections (e.g., 3.1.1)
+    toc-location: left    # Pins TOC to left sidebar so it doesn't block main page
+    toc-title: "Contents" # Custom title for the TOC sidebar
+    number-sections: true # Numbers sections automatically (e.g., 1, 1.1, 2)
+    code-fold: true       # Collapses code blocks by default under a dropdown
+    code-summary: "Show code" # Label text on collapsed code blocks
+    code-tools: true      # Adds global code menu (Show/Hide All Code) at top right
+    code-copy: true       # Adds a one-click copy button to code blocks
+    embed-resources: true # Bundles images/CSS into a single stand-alone HTML file
+    df-print: paged       # Formats data frames into interactive paged tables
+    fig-height: 5         # Default plot height in inches
+    fig-width: 8          # Default plot width in inches
+    #fig-responsive: true # Scales figures smoothly across screen sizes
+    smooth-scroll: true   # Enables smooth scrolling when clicking TOC links
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(palmerpenguins)  # skip if you've already loaded your own data
+theme_set(
+  theme_minimal(base_size = 14) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      plot.subtitle = element_text(colour = "grey40"),
+      legend.position = "bottom"
+    )
+)
+```
+
+## Summary table
+
+```{r}
+# 1. Summary table
+penguins |>
+  group_by(species, island) |>
+  summarise(
+    mean_body_mass = mean(body_mass_g, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+## Body mass by species
+
+```{r}
+#| label: fig-boxplot
+#| fig-cap: "Body mass distribution by species and island"
+# 2. Boxplot
+penguins |>
+  ggplot(aes(x = species, y = body_mass_g, fill = island)) +
+  geom_boxplot() +
+  labs(
+    x = "Species",
+    y = "Body mass (g)",
+    fill = "Island"
+  )
+```
+
+```{r}
+# Pipe directly from aggregation to plotting with error bars
+mass_compare_plot <- penguins |>
+  group_by(species, island) |>
+  summarise(
+    mean_mass = mean(body_mass_g, na.rm = TRUE),
+    sd_mass = sd(body_mass_g, na.rm = TRUE),
+    n = n(),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = species, y = mean_mass, colour = island)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_mass - sd_mass, 
+                    ymax = mean_mass + sd_mass), 
+                width = 0.2) +
+  labs(title = "Mean Body Mass by Species and Island",
+       subtitle = "Error bars represent standard deviation",
+       y = "Mean Body Mass (g)",
+       x = "Species")
+
+mass_compare_plot
+
+
+```
+
+```{r}
+#| echo: false
+ggsave("outputs/mass_compare_plot.png", 
+       plot = mass_compare_plot, 
+       width = 120, height = 120, 
+       units = "mm", dpi = 300)
+
+```

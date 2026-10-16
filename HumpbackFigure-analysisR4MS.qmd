@@ -1,0 +1,165 @@
+---
+title: "R for Marine Science Workshop 3"
+format:
+  html:
+    embed-resources: true
+    code-fold: true
+    code-summary: "Show code"
+editor: visual
+---
+
+## Original figure
+
+![Original Figure 3 from Ferguson, Hopkins and Witteveen (2018). Estimated abundances of humpback whales and their prey, 2004 to 2014, with whale diet in the inset.](Outputs/figures/ImageOriginalFigure3.jpg)
+
+**The message.** Figure 3 presents the empirical dataset for a humpback whale case study in the western Gulf of Alaska. It shows that humpback whale abundance and the abundance of their prey (fish and zooplankton) varied strongly between 2004 and 2014, and that the fish share of whale diets, estimated from stable isotopes, fell from about 45% in 2004 to about 4% in 2014. The paper uses these data to show that combining abundance and diet data gives better estimates of consumption rates than abundance data alone.
+
+## Critique
+
+<!-- 1. **Different quantities on one shared y-axis.** Whale values are estimated numbers of individuals (from photographs), while fish and zooplankton are relative indices (from acoustic backscatter). Plotting them on a single axis labelled "Population index" implies they are comparable, and the lines cross and crowd each other. The whale error bars are also hard to read.
+2. **The inset overlaps the main plot.** The 2013 fish error bar runs into the inset's axis and label, so the top of the bar is obscured.
+3. **The inset's x-axis does not line up with the main plot.** Only 2005 and 2010 are labelled, so readers cannot match inset points to years.
+4. **Lines imply continuity across gaps.** Some adjacent sampled years are joined and others are not, so the gaps look like a design choice, and three sparse points look like a smooth trend.
+5. **Overlapping points.** Whales and fish sit almost on top of each other in 2007 and 2014, hiding their error bars.
+6. **Inaccessible palette.** Fish and zooplankton are two shades of the same blue, which is hard to distinguish for colour-blind readers or in greyscale.
+7. **Impossible error bar.** The fish diet proportion in 2014 has a mean ± SD bar that extends below 0%, which is impossible for a proportion.-->
+
+## Reconstruction
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(patchwork)
+library(readxl)
+```
+
+```{r}
+#| output: false
+AbundanceDiet_data <- read_excel("data/Workshop3/AbundanceDiet_data.xlsx",
+                                 sheet = 1, range = "A3:G9")
+str(AbundanceDiet_data)
+```
+
+```{r}
+#| label: tidy-abundance
+#| echo: false
+#| output: false 
+abund <- AbundanceDiet_data |>
+  rename(
+    year      = Year,
+    hump_mean = `Humpback abundance`,
+    hump_se   = `Humpback SE`,
+    fish_mean = `Fish population index`,
+    fish_se   = `Fish SE`,
+    zoo_mean  = `Zooplankton population index`,
+    zoo_se    = `Zooplankton SE`
+  ) |>
+  pivot_longer(cols = -year,
+               names_to = c("group", ".value"),
+               names_sep = "_") |>
+  mutate(
+    group = factor(group,
+                   levels = c("hump", "fish", "zoo"),
+                   labels = c("Humpback whales", "Fish", "Zooplankton")),
+    lower = mean - se,
+    upper = mean + se
+  ) |>
+  arrange(group, year) |>
+  group_by(group) |>
+  mutate(run = cumsum(c(TRUE, diff(year) != 1))) |>
+  ungroup()
+
+abund
+```
+
+```{r}
+#| label: tidy-diet
+#| output: false 
+diet_raw <- read_excel("data/Workshop3/AbundanceDiet_data.xlsx",
+                       sheet = 2, range = "A3:G9")
+
+diet <- diet_raw |>
+  rename(
+    year      = Year,
+    n         = `Sample size`,
+    fish_mean = `Mean p1`,
+    fish_sd   = SD,
+    fish_lo   = `0.025`,
+    fish_med  = `0.5`,
+    fish_hi   = `0.975`
+  ) |>
+  mutate(
+    zoo_mean = 100 - fish_mean,
+    zoo_lo   = 100 - fish_hi,
+    zoo_hi   = 100 - fish_lo
+  ) |>
+  select(year, n, fish_mean, fish_lo, fish_hi, zoo_mean, zoo_lo, zoo_hi) |>
+  pivot_longer(cols = -c(year, n),
+               names_to = c("prey", ".value"),
+               names_sep = "_") |>
+  rename(lower = lo, upper = hi) |>
+  mutate(prey = factor(prey,
+                       levels = c("fish", "zoo"),
+                       labels = c("Fish", "Zooplankton"))) |>
+  arrange(prey, year) |>
+  group_by(prey) |>
+  mutate(run = cumsum(c(TRUE, diff(year) != 1))) |>
+  ungroup()
+
+diet
+```
+
+```{r}
+#| label: fig-final
+#| echo: false
+#| fig-width: 8
+#| fig-height: 10
+#| fig-cap: "**Figure 1.** Estimated abundance of humpback whales and their prey, and humpback whale diet, in the western Gulf of Alaska, 2004 to 2014. **(A)** Humpback whale abundance (estimated number of whales) and relative density indices for fish and zooplankton, each shown on its own y-axis because the quantities are measured differently. Points are means and error bars show ±1 standard error. Lines join only consecutive sampled years, and no data are available for 2006 or 2008 to 2011. **(B)** Proportional diet of humpback whales estimated from stable isotopes, expressed as the percentage of assimilated biomass. Each column shows the posterior mean and sums to 100%. Diet sample sizes ranged from 6 to 47 whales per year. Data are from Ferguson, Hopkins and Witteveen (2018)."
+
+x_scale <- scale_x_continuous(breaks = 2004:2014, limits = c(2003.5, 2014.5))
+pal <- scales::viridis_pal(option = "D", end = 0.85)(3)
+
+theme_ms <- function() {
+  theme_classic(base_size = 13) +
+    theme(legend.position = "top",
+          legend.title = element_blank(),
+          panel.grid.major.y = element_line(colour = "grey90"),
+          axis.title = element_text(face = "bold"))
+}
+
+p_abund2 <- ggplot(abund, aes(year, mean, colour = group)) +
+  geom_line(aes(group = interaction(group, run)), linewidth = 0.8) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.25) +
+  geom_point(size = 2.8) +
+  facet_wrap(~ group, ncol = 1, scales = "free_y",
+             labeller = as_labeller(c(
+               "Humpback whales" = "Humpback whales (estimated number of whales)",
+               "Fish"            = "Fish (relative density index)",
+               "Zooplankton"     = "Zooplankton (relative density index)"))) +
+  scale_colour_viridis_d(option = "D", end = 0.85) +
+  x_scale +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.1))) +
+  labs(x = NULL, y = "Abundance estimate or index") +
+  theme_ms() +
+  theme(legend.position = "none",
+        strip.background = element_blank(),
+        strip.text = element_text(face = "bold", hjust = 0))
+
+p_diet2 <- ggplot(diet, aes(year, mean, fill = prey)) +
+  geom_col(width = 0.7, position = position_stack(reverse = TRUE)) +
+  scale_fill_manual(values = c("Fish" = pal[2], "Zooplankton" = pal[3])) +
+  x_scale +
+  scale_y_continuous(limits = c(0, 100), expand = expansion(mult = c(0, 0.02))) +
+  labs(x = "Year", y = "Whale diet (% biomass)") +
+  theme_ms()
+
+(p_abund2 / p_diet2) +
+  plot_layout(heights = c(3, 1.3)) +
+  plot_annotation(tag_levels = "A")
+```
+
+**A trade-off** Stacked columns cannot show the uncertainty in the diet estimates, which the original's error bars did. Readers should treat the diet percentages as posterior means, not exact values.
+
+## Reference 
+Ferguson, J. M., Hopkins, J. B. III, & Witteveen, B. H. (2018). Integrating abundance and diet data to improve inferences of food web dynamics. *Methods in Ecology and Evolution*, 9, 1581–1591. https://doi.org/10.1111/2041-210X.13001

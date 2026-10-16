@@ -33,8 +33,6 @@ execute:
   knitr:
     opts_chunk: 
       comment: "#>"       # Clean output prefix for console printed output
-      dev: "cairo_pdf"    # Uses high-quality Cairo device for crisp vector graphics in PDF
-
 ---
 
 # Introduction
@@ -44,7 +42,6 @@ We know we have data for 4 sites, 4 species, and 30 days of sampling. We also ha
 
 
 ```{r housekeeping}
-## Housekeeping
 #| message: true
 #| warning: false
 rm(list = ls())
@@ -260,7 +257,7 @@ catch_data_final |>
 
 
 
-# ======== MAIN DATA WRANGLE DONE!! ========
+# MAIN DATA WRANGLE DONE 
 
 ## Now we can start thinking about hypotheses and what might be going on in the ecology of these species in this ecosystem
 
